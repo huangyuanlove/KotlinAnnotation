@@ -8,15 +8,29 @@
     tools:context=".MainActivity">
 
     <TextView
+        android:padding="10dp"
+        android:background="@color/purple_200"
+        android:textColor="@color/black"
         android:id="@+id/view_bind_test"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Hello World!" />
 
     <TextView
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:background="@color/purple_200"
         android:id="@+id/click_responder_test"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="click_responder_test" />
+    <TextView
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:background="@color/purple_200"
+        android:id="@+id/click_responder_test2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="click_responder_test2" />
 
 </LinearLayout>
