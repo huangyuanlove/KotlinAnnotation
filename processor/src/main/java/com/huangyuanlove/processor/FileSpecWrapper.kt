@@ -1,5 +1,6 @@
 package com.huangyuanlove.processor
 
+import com.huangyuanlove.annotations.IntentValue
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.asClassName
@@ -54,23 +55,18 @@ class FileSpecWrapper(private val element: TypeElement, val messager: Messager) 
 
 
     fun generateConstructor(): FunSpec {
-        log("generateConstructor")
         val builder = FunSpec.constructorBuilder().addParameter("target", className)
             .addParameter("view", viewClass)
             .addParameter("bundle", bundleClass)
 
         if (layoutIdStr != "") {
-            log("layoutIdStr not null:${layoutIdStr}")
             builder.addStatement("target.setContentView(R.layout.%N)", layoutIdStr)
         }
 
         if (!intentValueMap.isNullOrEmpty()) {
-
-
             builder.addStatement("bundle?.let{")
             intentValueMap.forEach {
-                log("${it.key} ->${it.value.asType().kind}")
-                addParseIntentType(it.key, it.value, builder)
+                addParseIntentType(it.value, builder)
             }
             builder.addStatement("}")
         }
@@ -86,7 +82,6 @@ class FileSpecWrapper(private val element: TypeElement, val messager: Messager) 
         }
 
         clickListenerMap.forEach { (idStr, element) ->
-            log("$idStr :-> ${element}")
 
             when (element.parameters.size) {
                 //没有参数
@@ -114,20 +109,162 @@ class FileSpecWrapper(private val element: TypeElement, val messager: Messager) 
     }
 
     private fun addParseIntentType(
-        key: String,
         element: VariableElement,
         builder: FunSpec.Builder
     ) {
-        builder.beginControlFlow("if (it.containsKey(%S))", key)
-        when (element.asType().kind) {
-            TypeKind.BOOLEAN,TypeKind.BYTE,TypeKind.SHORT,TypeKind.INT, TypeKind.LONG,TypeKind.CHAR,TypeKind.FLOAT,TypeKind.DOUBLE,->
+        val intentValue: IntentValue = element.getAnnotation(IntentValue::class.java)
+        val keys = intentValue.key
+        val targetKey = element.simpleName.toString()
+        for (key in keys) {
 
 
-                builder.addStatement("target.%N = it.get(%S) as %T", key, key, element.asType())
+            builder.beginControlFlow("if (it.containsKey(%S))", key)
+
+            intentValue.key
+            when (intentValue.type) {
+                IntentValue.DEFAULT_TYPE -> {
+                    when (element.asType().kind) {
+                        TypeKind.BOOLEAN ->
+                            builder.addStatement("target.%N = it.getBoolean(%S)", targetKey, key)
+                        TypeKind.SHORT ->
+                            builder.addStatement("target.%N = it.getShort(%S)", targetKey, key)
+                        TypeKind.BYTE ->
+                            builder.addStatement("target.%N = it.getByte(%S)", targetKey, key)
+                        TypeKind.INT ->
+                            builder.addStatement("target.%N = it.getInt(%S)", targetKey, key)
+                        TypeKind.CHAR ->
+                            builder.addStatement("target.%N = it.getChar(%S)", targetKey, key)
+                        TypeKind.LONG ->
+                            builder.addStatement("target.%N = it.getLong(%S)", targetKey, key)
+                        TypeKind.FLOAT ->
+                            builder.addStatement("target.%N = it.getFloat(%S)", targetKey, key)
+                        TypeKind.DOUBLE ->
+                            builder.addStatement("target.%N = it.getDouble(%S)", targetKey, key)
+
+                        TypeKind.ARRAY -> {
+
+                            when (element.asType().toString()) {
+                                "byte[]" ->
+                                    builder.addStatement("target.%N = it.getByteArray(%S)", targetKey, key)
+                                "int[]" ->
+                                    builder.addStatement("target.%N = it.getIntArray(%S)", targetKey, key)
+                                "char[]" ->
+                                    builder.addStatement("target.%N = it.getCharArray(%S)", targetKey, key)
+                                "float[]" ->
+                                    builder.addStatement("target.%N = it.getFloatArray(%S)", targetKey, key)
+                                "java.lang.CharSequence[]" ->
+                                    builder.addStatement(
+                                        "target.%N = it.getCharSequenceArray(%S)",
+                                        targetKey,
+                                        key
+                                    )
+                                "java.lang.String[]" ->
+                                    builder.addStatement(
+                                        "target.%N = it.getStringArray(%S)",
+                                        targetKey,
+                                        key
+                                    )
+                                "boolean[]" ->
+                                    builder.addStatement(
+                                        "target.%N = it.getBooleanArray(%S)",
+                                        targetKey,
+                                        key
+                                    )
+                                "short[]" ->
+                                    builder.addStatement(
+                                        "target.%N = it.getShortArray(%S)",
+                                        targetKey,
+                                        key
+                                    )
+                                "double[]" ->
+                                    builder.addStatement(
+                                        "target.%N = it.getDoubleArray(%S)",
+                                        targetKey,
+                                        key
+                                    )
+                                "long[]" ->
+                                    builder.addStatement(
+                                        "target.%N = it.getLongArray(%S)",
+                                        targetKey,
+                                        key
+                                    )
 
 
+                                else -> {
+                                    builder.addStatement(
+                                        "target.%N = it.getParcelableArray(%S) as %T",
+                                        targetKey,
+                                        key,
+                                        element.asType()
+                                    )
+                                }
+                            }
+                        }
+
+
+                        TypeKind.DECLARED -> {
+                            when (element.asType().toString()) {
+                                "java.lang.String" ->
+                                    builder.addStatement(
+                                        "target.%N = it.getString(%S,\"\")",
+                                        targetKey,
+                                        key
+                                    )
+                                "java.util.ArrayList<java.lang.String>"->
+                                    builder.addStatement(
+                                        "target.%N = it.getStringArrayList(%S)",
+                                        targetKey,
+                                        key
+                                    )
+                                "java.lang.CharSequence"->
+                                    builder.addStatement(
+                                        "target.%N = it.getCharSequence(%S)",
+                                        targetKey,
+                                        key
+                                    )
+                                "java.util.ArrayList<java.lang.Integer>"->
+                                    builder.addStatement(
+                                        "target.%N = it.getIntegerArrayList(%S)",
+                                        targetKey,
+                                        key
+                                    )
+                                "java.util.ArrayList<java.lang.CharSequence>"->
+                                    builder.addStatement(
+                                        "target.%N = it.getCharSequenceArrayList(%S)",
+                                        targetKey,
+                                        key
+                                    )
+
+
+                                else ->
+                                    log("TypeKind.DECLARED: ${key}  ${element.asType().toString()}")
+                            }
+                        }
+                        else ->
+                            log("没有找到对应的的类型 ${key}  ${element.asType().toString()}")
+
+                    }
+                }
+                IntentValue.SERIALIZABLE_OBJECT -> {
+                    builder.addStatement(
+                        "target.%N = it.getSerializable(%S) as %T ",
+                        targetKey,
+                        key,
+                        element.asType()
+                    )
+                }
+                IntentValue.PARCELABLE_OBJECT -> {
+                    builder.addStatement(
+                        "target.%N = it.getParcelable<%T>(%S)",
+                        targetKey,
+                        element.asType(),
+                        key
+
+                    )
+                }
+            }
+            builder.endControlFlow()
         }
-        builder.endControlFlow()
     }
 
     private fun log(msg: String) {
