@@ -5,10 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
-import com.huangyuanlove.annotations.BindView
-import com.huangyuanlove.annotations.ClickResponder
-import com.huangyuanlove.annotations.ContentView
-import com.huangyuanlove.annotations.IntentValue
+import com.huangyuanlove.annotations.*
 import com.huangyuanlove.api.ViewInject
 import com.huangyuanlove.kotlinannotation.data.DataP
 import com.huangyuanlove.kotlinannotation.data.DataS
@@ -20,7 +17,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var view_bind_test: TextView
 
 
-    @IntentValue("aByte")
+    @IntentValue("aByte","bByte","cByte","dByte")
     var aByte: Byte = 1
 
     @IntentValue("aBooleanA")
@@ -35,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     @IntentValue("aFloat")
     var aFloat: Float = 0.0f
 
+    @SchemeArgs("aString")
     @IntentValue("aString")
     var aString : String = "abc"
 
@@ -96,15 +94,24 @@ class MainActivity : AppCompatActivity() {
     @IntentValue("aDataP", type = IntentValue.PARCELABLE_OBJECT)
     var dataP:DataP? = null
 
+    @SchemeArgs("aUriBoolean")
+    var uriBoolean :Boolean = true
+
+    @SchemeArgs("aUriInt")
+    var uriInt :Int = -1
+
+    @SchemeArgs("aUriString")
+    var uriString :String = "a"
+
+    @SchemeArgs("aUriDouble")
+    var uriDouble :Double = 1.1
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ViewInject.bind(this)
-        integerArrayList =  intent.getIntegerArrayListExtra("")
-        charSequenceArrayList = intent.getCharSequenceArrayListExtra("")
-        stringArrayList = intent.getStringArrayListExtra("")
-        charSequence = intent.getCharSequenceExtra("")
+        Toast.makeText(this,"aString->${aString}",Toast.LENGTH_SHORT).show()
 
 
     }

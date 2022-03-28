@@ -1,10 +1,7 @@
 package com.huangyuanlove.processor
 
 import com.google.auto.service.AutoService
-import com.huangyuanlove.annotations.BindView
-import com.huangyuanlove.annotations.ClickResponder
-import com.huangyuanlove.annotations.ContentView
-import com.huangyuanlove.annotations.IntentValue
+import com.huangyuanlove.annotations.*
 import com.squareup.kotlinpoet.*
 import java.io.File
 import javax.annotation.processing.*
@@ -60,17 +57,13 @@ class InjectProcessor : AbstractProcessor() {
         roundEnv.getElementsAnnotatedWith(IntentValue::class.java).forEach {
             collectIntentValueInfo(it)
         }
-
-    }
-
-    private fun FileSpec.writeFile() {
-
-        val kaptKotlinGeneratedDir = processingEnv.options["kapt.kotlin.generated"]
-        val outputFile = File(kaptKotlinGeneratedDir).apply {
-            mkdirs()
+        roundEnv.getElementsAnnotatedWith(SchemeArgs::class.java).forEach {
+            collectSchemeInfo(it)
         }
-        writeTo(outputFile)
+
     }
+
+
 
     private fun collectContentViewInfo(element: Element) {
         //ContentView注解的是Class，本身就是TypeElement
@@ -143,13 +136,43 @@ class InjectProcessor : AbstractProcessor() {
         mInjectMaps[className] = fileSpecWrapper
     }
 
+    private fun collectSchemeInfo(element: Element){
+        val variableElement = element as VariableElement
+        val typeElement = element.enclosingElement as TypeElement
+        val className = typeElement.qualifiedName.toString()
+        var fileSpecWrapper = mInjectMaps[className]
+        if (fileSpecWrapper == null) {
+            fileSpecWrapper = FileSpecWrapper(typeElement,messager)
+        }
+
+        variableElement.getAnnotation(SchemeArgs::class.java).run {
+            key.forEach {
+                fileSpecWrapper.uriValueMap[it] = variableElement
+            }
+        }
+        mInjectMaps[className] = fileSpecWrapper
+
+
+
+    }
+
+    private fun FileSpec.writeFile() {
+
+        val kaptKotlinGeneratedDir = processingEnv.options["kapt.kotlin.generated"]
+        val outputFile = File(kaptKotlinGeneratedDir).apply {
+            mkdirs()
+        }
+        writeTo(outputFile)
+    }
+
     //把注解类都添加进行，这个方法一看方法名就应该知道干啥的
     override fun getSupportedAnnotationTypes(): Set<String> {
         return setOf(
             ContentView::class.java.canonicalName,
             BindView::class.java.canonicalName,
             ClickResponder::class.java.canonicalName,
-            IntentValue::class.java.canonicalName
+            IntentValue::class.java.canonicalName,
+            SchemeArgs::class.java.canonicalName
         )
     }
 
@@ -159,6 +182,6 @@ class InjectProcessor : AbstractProcessor() {
     }
 
     fun log(msg:String){
-        messager.printMessage(Diagnostic.Kind.WARNING,msg)
+        messager.printMessage(Diagnostic.Kind.WARNING,"InjectProcessor: ${msg}")
     }
 }

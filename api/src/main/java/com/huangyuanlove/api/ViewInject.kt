@@ -33,7 +33,7 @@ object ViewInject {
             //获取构造方法
             val constructor = bindingClass.getConstructor(targetClass, View::class.java,Bundle::class.java)
             //向方法中传入数据activity和view
-            constructor.newInstance(target, source)
+            constructor.newInstance(target, source,bundle)
         } catch (e: ClassNotFoundException) {
             e.printStackTrace()
         } catch (e: NoSuchMethodException) {
